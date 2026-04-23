@@ -40,9 +40,6 @@ def get_nearby_parks(lat, lon, radius=3000):
       node["leisure"="park"](around:{radius},{lat},{lon});
       way["leisure"="park"](around:{radius},{lat},{lon});
       relation["leisure"="park"](around:{radius},{lat},{lon});
-      node["leisure"="garden"](around:{radius},{lat},{lon});
-      way["leisure"="garden"](around:{radius},{lat},{lon});
-      relation["leisure"="garden"](around:{radius},{lat},{lon});
     );
     out center;
     """
@@ -61,11 +58,8 @@ def get_nearby_parks(lat, lon, radius=3000):
         for element in data.get('elements', []):
             tags = element.get('tags', {})
             
-            # --- ĐOẠN MỚI THÊM VÀO ---
-            # Kiểm tra: Nếu địa điểm không có thẻ 'name' thì bỏ qua, không đưa vào danh sách
             if 'name' not in tags:
-                continue 
-            # -------------------------
+                continue
 
             name = tags['name']
             p_lat = element.get('lat', element.get('center', {}).get('lat'))
@@ -98,20 +92,15 @@ def get_weather_emoji(icon_code):
     return mapping.get(icon_code, '🌡️') # Mặc định nếu không khớp
 
 def draw_map(city_name, lat, lon, temp, desc, icon_code, parks, radius=3000):
-    # 1. Khởi tạo bản đồ trống
     m = folium.Map(location=[lat, lon], zoom_start=14, control_scale=True, tiles=None)
-    
-    # 2. THÊM LỚP BẢN ĐỒ OPENSTREETMAP (Dùng máy chủ phụ HOT để không bị lỗi 403)
     folium.TileLayer(
         tiles='https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
         attr='&copy; OpenStreetMap contributors, Tiles by HOT',
         name='OpenStreetMap (Chuẩn)'
     ).add_to(m)
     
-    # Bạn có thể thêm CartoDB làm phương án phụ nếu thích
     folium.TileLayer('cartodbvoyager', name='CartoDB (Dự phòng)').add_to(m)
     
-    # 3. VẼ VÒNG TRÒN BÁN KÍNH TÌM KIẾM (thể hiện rõ tư duy tính toán giới hạn không gian)
     folium.Circle(
         location=[lat, lon],
         radius=radius, # Bán kính bằng số mét bạn tìm kiếm
@@ -123,7 +112,6 @@ def draw_map(city_name, lat, lon, temp, desc, icon_code, parks, radius=3000):
         tooltip=f"Vùng tìm kiếm: Bán kính {radius/1000} km"
     ).add_to(m)
 
-    # 4. Tạo giao diện đánh dấu trung tâm hiển thị trực tiếp EMOJI + NHIỆT ĐỘ
     emoji = get_weather_emoji(icon_code)
     html_content = f"""
     <div style="
@@ -136,7 +124,6 @@ def draw_map(city_name, lat, lon, temp, desc, icon_code, parks, radius=3000):
     </div>
     """
     
-    # Popup trung tâm chi tiết hơn
     center_popup = f"<div style='min-width: 150px'><b>{city_name}</b><br>Thời tiết: {desc}<br>Tọa độ: {lat:.4f}, {lon:.4f}</div>"
     
     folium.Marker(
@@ -146,9 +133,7 @@ def draw_map(city_name, lat, lon, temp, desc, icon_code, parks, radius=3000):
         tooltip="Vị trí Trung tâm"
     ).add_to(m)
     
-    # 5. Vẽ marker công viên và đường nối
     for park in parks:
-        # Làm đẹp khung Popup thông tin công viên
         park_popup = f"""
         <div style='min-width: 180px'>
             <h4 style='margin-top:0; margin-bottom:5px; color: #2E86C1;'>{park['name']}</h4>
@@ -174,26 +159,18 @@ def draw_map(city_name, lat, lon, temp, desc, icon_code, parks, radius=3000):
             tooltip=f"{park['distance']} m"
         ).add_to(m)
 
-    # 6. THÊM CÁC CÔNG CỤ TƯƠNG TÁC (PLUGINS)
-    # Nút phóng to toàn màn hình
     plugins.Fullscreen(position='topright', title='Phóng to toàn màn hình', title_cancel='Thu nhỏ').add_to(m)
     
-    # Thước đo khoảng cách thủ công (rất ấn tượng cho đồ án)
     plugins.MeasureControl(position='topleft', primary_length_unit='meters', primary_area_unit='sqmeters', active_color='#FF5733').add_to(m)
     
-    # Bản đồ thu nhỏ ở góc
     plugins.MiniMap(toggle_display=True, position='bottomright').add_to(m)
     
-    # Thêm menu chọn Lớp bản đồ
     folium.LayerControl().add_to(m)
         
     m.save("city_weather_parks_map.html")
     print("\n[+] Đã tạo bản đồ")
 
     file_path = os.path.abspath("city_weather_parks_map.html")
-    print("  -> Đang tự động mở bản đồ trên trình duyệt...")
-    
-    # Yêu cầu hệ điều hành mở file bằng trình duyệt mặc định
     webbrowser.open(f"file:///{file_path}")
 
 def main():
@@ -211,7 +188,6 @@ def main():
         
     parks = get_nearby_parks(lat, lon)
     
-    # Bước 4 – Hiển thị kết quả lên màn hình console
     print("-" * 30)
     print(f"City: {city}")
     print(f"Coordinates: ({lat}, {lon})")
@@ -220,7 +196,7 @@ def main():
     print(f"  - Condition: {desc}")
     print(f"Nearby places:")
     if parks:
-        for i, park in enumerate(parks[:10], 1): # Chỉ in 10 công viên đầu tiên cho gọn
+        for i, park in enumerate(parks, 1):
             print(f"  {i}. {park['name']} ({park['distance']} m)")
     else:
         print("  Không tìm thấy công viên nào!")
