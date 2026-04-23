@@ -98,13 +98,18 @@ def get_weather_emoji(icon_code):
     return mapping.get(icon_code, '🌡️') # Mặc định nếu không khớp
 
 def draw_map(city_name, lat, lon, temp, desc, icon_code, parks, radius=3000):
-    # 1. Khởi tạo bản đồ, bật thanh tỉ lệ xích (control_scale)
-    m = folium.Map(location=[lat, lon], zoom_start=14, control_scale=True)
+    # 1. Khởi tạo bản đồ trống
+    m = folium.Map(location=[lat, lon], zoom_start=14, control_scale=True, tiles=None)
     
-    # 2. Thêm các tùy chọn giao diện bản đồ nền để người xem tự chọn
-    folium.TileLayer('OpenStreetMap', name='Bản đồ chuẩn').add_to(m)
-    folium.TileLayer('CartoDB positron', name='Bản đồ sáng (CartoDB)').add_to(m)
-    folium.TileLayer('CartoDB dark_matter', name='Bản đồ tối (CartoDB)').add_to(m)
+    # 2. THÊM LỚP BẢN ĐỒ OPENSTREETMAP (Dùng máy chủ phụ HOT để không bị lỗi 403)
+    folium.TileLayer(
+        tiles='https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+        attr='&copy; OpenStreetMap contributors, Tiles by HOT',
+        name='OpenStreetMap (Chuẩn)'
+    ).add_to(m)
+    
+    # Bạn có thể thêm CartoDB làm phương án phụ nếu thích
+    folium.TileLayer('cartodbvoyager', name='CartoDB (Dự phòng)').add_to(m)
     
     # 3. VẼ VÒNG TRÒN BÁN KÍNH TÌM KIẾM (thể hiện rõ tư duy tính toán giới hạn không gian)
     folium.Circle(
