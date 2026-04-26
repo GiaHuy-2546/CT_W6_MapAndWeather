@@ -5,11 +5,11 @@ import folium
 from folium import plugins
 from geopy.distance import geodesic
 
-# Cấu hình API Key (HÃY THAY KEY CỦA BẠN VÀO ĐÂY)
-WEATHER_API_KEY = "1e50238f349acd228e7310187bc68741"
+
+WEATHER_API_KEY = ""
+# Có thể dùng của nhóm em là: 1e50238f349acd228e7310187bc68741
 
 def get_coordinates(city_name):
-    # Bước 1 – Lấy tọa độ bằng OpenStreetMap (Nominatim)
     url = f"https://nominatim.openstreetmap.org/search?q={city_name}&format=json&limit=1"
     headers = {"User-Agent": "MyCTAssignmentApp/1.0"}
     response = requests.get(url, headers=headers).json()
@@ -19,7 +19,6 @@ def get_coordinates(city_name):
     return None, None
 
 def get_weather(lat, lon):
-    # Bước 2 – Lấy thời tiết bằng OpenWeather API
     url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}&units=metric"
     response = requests.get(url).json()
     
@@ -69,7 +68,6 @@ def get_nearby_parks(lat, lon, radius=3000):
                 distance = geodesic((lat, lon), (p_lat, p_lon)).meters
                 parks.append({"name": name, "lat": p_lat, "lon": p_lon, "distance": round(distance, 2)})
                 
-        # Sắp xếp từ gần đến xa
         return sorted(parks, key=lambda x: x['distance'])
         
     except Exception as e:
@@ -77,7 +75,6 @@ def get_nearby_parks(lat, lon, radius=3000):
         return []
 
 def get_weather_emoji(icon_code):
-    # Ánh xạ mã icon của OpenWeather thành Emoji đẹp mắt
     mapping = {
         '01d': '☀️', '01n': '🌙',       # Trời quang
         '02d': '⛅', '02n': '☁️',       # Ít mây
@@ -89,7 +86,7 @@ def get_weather_emoji(icon_code):
         '13d': '❄️', '13n': '❄️',       # Tuyết
         '50d': '🌫️', '50n': '🌫️'        # Sương mù
     }
-    return mapping.get(icon_code, '🌡️') # Mặc định nếu không khớp
+    return mapping.get(icon_code, '🌡️')
 
 def draw_map(city_name, lat, lon, temp, desc, icon_code, parks, radius=3000):
     m = folium.Map(location=[lat, lon], zoom_start=14, control_scale=True, tiles=None)
@@ -103,12 +100,12 @@ def draw_map(city_name, lat, lon, temp, desc, icon_code, parks, radius=3000):
     
     folium.Circle(
         location=[lat, lon],
-        radius=radius, # Bán kính bằng số mét bạn tìm kiếm
+        radius=radius,
         color='#3388ff',
         weight=1,
         fill=True,
         fill_color='#3388ff',
-        fill_opacity=0.1, # Độ mờ 10%
+        fill_opacity=0.1,
         tooltip=f"Vùng tìm kiếm: Bán kính {radius/1000} km"
     ).add_to(m)
 
@@ -148,8 +145,6 @@ def draw_map(city_name, lat, lon, temp, desc, icon_code, parks, radius=3000):
             icon=folium.Icon(color='green', icon='tree', prefix='fa'),
             tooltip=park['name']
         ).add_to(m)
-        
-        # Đổi đường nối sang màu cam rực rỡ, dễ nhìn hơn trên nền bản đồ
         folium.PolyLine(
             locations=[[lat, lon], [park['lat'], park['lon']]],
             color="#FF5733", 
@@ -200,8 +195,6 @@ def main():
             print(f"  {i}. {park['name']} ({park['distance']} m)")
     else:
         print("  Không tìm thấy công viên nào!")
-    
-    # Vẽ map
     draw_map(city, lat, lon, temp, desc, icon_code, parks, radius=3000)
 
 if __name__ == "__main__":
